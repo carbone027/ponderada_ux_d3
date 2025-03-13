@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de Zonas</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/topojson@3"></script>
+    <style>
+        svg {
+            width: 100%;
+            height: fit-content;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <svg></svg>
+
+    <script>
+        const width = 800, height = 600;
+
+const svg = d3.select("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+const projection = d3.geoMercator()
+    .scale(12000)
+    .center([-47.6333, -22.5505])
+    .translate([width / 2, height / 2]);
+
+const path = d3.geoPath().projection(projection);
+
+fetch("/geojson-files")
+    .then(response => response.json())
+    .then(files => {
+        files.forEach(file => {
+            fetch(`/geojson/${file}`)
+                .then(response => response.json())
+                .then(data => {
+                    svg.append("path")
+                        .datum(data)
+                        .attr("d", path)
+                        .attr("fill", "none")
+                        .attr("stroke", "black");
+                })
+                .catch(error => console.error("Erro ao carregar:", file, error));
+        });
+    })
+    .catch(error => console.error("Erro ao buscar arquivos GeoJSON:", error));
+
+    </script>
+</body>
+</html>
