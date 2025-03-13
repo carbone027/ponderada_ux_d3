@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+  <head>
+    <title>Mapa Interativo de São Paulo</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+      }
+      .map-area {
+        fill: #ccc;
+        stroke: #999;
+        stroke-width: 0.5px;
+      }
+      .chamado {
+        fill: red;
+        opacity: 0.8;
+        cursor: pointer;
+      }
+      .gasista {
+        fill: blue;
+        opacity: 0.8;
+        cursor: pointer;
+      }
+      .tooltip {
+        position: absolute;
+        text-align: center;
+        padding: 6px;
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        border-radius: 5px;
+        font-size: 12px;
+        pointer-events: none;
+        opacity: 0;
+      }
+    </style>
+  </head>
+  <body>
+
+    <!-- Tooltip -->
+    <div class="tooltip" id="tooltip"></div>
+
+    <!-- SVG do mapa -->
+    <svg id="map" width="900" height="600"></svg>
+
+    <script>
+      const width = 900;
+      const height = 600;
+
+      const svg = d3.select("#map")
+                    .attr("width", width)
+                    .attr("height", height);
+
+      const g = svg.append("g");  // Agrupamento para zoom/pan
+
+      const projection = d3.geoMercator()
+                           .scale(100000)  // Ajuste fino do zoom
+                           .center([-46.6333, -23.5505])  // Centraliza em São Paulo
+                           .translate([width / 2, height / 2]);
+
+      const geoPath = d3.geoPath().projection(projection);
+      const tooltip = d3.select("#tooltip");
+
+      // Zoom e Pan
+      const zoom = d3.zoom()
+                     .scaleExtent([1, 1000000000])
+                     .on("zoom", (event) => {
+                       g.attr("transform", event.transform);
+                     });
+
+      svg.call(zoom);
+
+      // Carrega GeoJSON e CSVs
+      Promise.all([
+        d3.json("distritos-sp.geojson"),  // Limites dos bairros
+        d3.csv("chamados.csv"),  // Chamados
+        d3.csv("gasistas.csv")   // Gasistas
+      ]).then(([geoData, chamados, gasistas]) => {
+
+        // Desenha os bairros
+        g.selectAll("path")
+         .data(geoData.features)
+         .enter()
+         .append("path")
+           .attr("class", "map-area")
+           .attr("d", geoPath);
+
+        // Função para exibir tooltip
+        function showTooltip(event, d) {
+          tooltip.style("opacity", 1)
+                 .html(`Lat: ${d.lat}<br>Lon: ${d.lon}`)
+                 .style("left", (event.pageX + 10) + "px")
+                 .style("top", (event.pageY - 10) + "px");
+        }
+
+        function hideTooltip() {
+          tooltip.style("opacity", 0);
+        }
+
+        // Adiciona os pontos dos chamados (vermelho)
+        g.selectAll("circle.chamado")
+         .data(chamados)
+         .enter()
+         .append("circle")
+           .attr("class", "chamado")
+           .attr("r", 5)
+           .attr("cx", d => projection([+d.lon, +d.lat])[0])
+           .attr("cy", d => projection([+d.lon, +d.lat])[1])
+           .on("mouseover", showTooltip)
+           .on("mousemove", (event) => {
+             tooltip.style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 10) + "px");
+           })
+           .on("mouseleave", hideTooltip);
+
+        // Adiciona os pontos dos gasistas (azul)
+        g.selectAll("circle.gasista")
+         .data(gasistas)
+         .enter()
+         .append("circle")
+           .attr("class", "gasista")
+           .attr("r", 5)
+           .attr("cx", d => projection([+d.lon, +d.lat])[0])
+           .attr("cy", d => projection([+d.lon, +d.lat])[1])
+           .on("mouseover", showTooltip)
+           .on("mousemove", (event) => {
+             tooltip.style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 10) + "px");
+           })
+           .on("mouseleave", hideTooltip);
+
+      }).catch(error => console.error("Erro ao carregar dados:", error));
+    </script>
+  </body>
+</html>
