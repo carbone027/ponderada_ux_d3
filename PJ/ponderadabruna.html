@@ -1,3 +1,10 @@
+
+=======
+// link para ver o mapa: http://localhost:8000/ponderadabruna.html
+
+
+
+
 <!DOCTYPE html>
 <html lang="pt">
 <head>
@@ -16,8 +23,8 @@
     <script>
         const svg = d3.select("svg");
 
-        // Ajustar caminho do GeoJSON
-        d3.json("geojs-35-mun.json").then(data => {
+        // Carregar GeoJSON corretamente via servidor local
+        d3.json("http://localhost:8000/geojs-35-mun.json").then(data => {
             const projection = d3.geoMercator().fitSize([800, 600], data);
             const path = d3.geoPath().projection(projection);
             
@@ -33,15 +40,11 @@
             // Gerar pontos dentro do mapa baseado no GeoJSON
             const cidades = data.features.map(f => {
                 const [x, y] = projection(d3.geoCentroid(f));
-                return { nome: f.properties.name || f.properties.id, x, y };
+                return { nome: f.properties.name, x, y };
             });
 
-            // Ajustar São Paulo como referência central
-            const sp = cidades.find(c => c.nome.includes("São Paulo"));
-            if (!sp) return; // Se não encontrar, não cria links
-            
             // Criar ligações apenas com São Paulo
-            let links = cidades.filter(c => c.nome !== sp.nome).map(cidade => ({ source: sp.nome, target: cidade.nome }));
+            let links = cidades.slice(1).map(cidade => ({ source: "São Paulo", target: cidade.nome }));
 
             // Criar links
             svg.selectAll(".link")
@@ -49,8 +52,8 @@
                 .enter()
                 .append("line")
                 .attr("class", "link")
-                .attr("x1", sp.x)
-                .attr("y1", sp.y)
+                .attr("x1", d => cidades.find(n => n.nome === d.source).x)
+                .attr("y1", d => cidades.find(n => n.nome === d.source).y)
                 .attr("x2", d => cidades.find(n => n.nome === d.target).x)
                 .attr("y2", d => cidades.find(n => n.nome === d.target).y);
 
@@ -63,7 +66,7 @@
                 .attr("cx", d => d.x)
                 .attr("cy", d => d.y)
                 .attr("r", 5);
-        }).catch(error => console.error("Erro ao carregar o GeoJSON:", error));
+        });
     </script>
 </body>
 </html>
