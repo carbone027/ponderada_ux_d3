@@ -14,18 +14,53 @@ As três visualizações desempenham um papel fundamental no projeto, e temos ce
 - DG: Davi e Gabriel
 
 # PJ
+### GAS&ISTAS - Visualização Interativa de Chamados de Gasistas em SP
 
 Fizemos o desenho sobre os chamados dos gasistas no estado de São Paulo, considerando a cidade de São Paulo como sede central. No projeto, ilustramos que os chamados podem ocorrer em qualquer região do estado.
 
-Abaixo, tem uma explicação detalhada sobre como visualizar a imagem e executá-la no seu servidor, além de uma foto do nosso desenho inicial estar dentro da pasta "PJ".
-## Requisitos:
+Fiz uma explicação sobre como visualizar a imagem e executá-la no servidor, além de uma foto do nosso desenho inicial estar dentro da pasta "PJ".
 
-- VScode de preferencia
-- Ter o Node.js instalado.
-- Instalar um servidor local para evitar problemas de CORS (exemplo: `http-server`).
-- Abrir o ternimal no VScode, e entre o codigo abaixo!
+## 🗺️ Descrição da Visualização
 
-Para rodar o projeto, rode o código `python -m http.server 8000` e depois acesse o link `http://localhost:8000/`.
+A visualização mostra um mapa interativo dos municípios do estado de São Paulo, utilizando dados geográficos no formato GeoJSON. A cidade de São Paulo está destacada com um ponto **amarelo**, representando a sede central de distribuição dos gasistas. As demais cidades atendidas estão marcadas com pontos **vermelhos**, com linhas conectando-as à capital, simulando os chamados.
+
+## ▶️ Como Executar o Projeto
+
+### Requisitos:
+- VS Code (de preferência)
+- Ter o **Node.js** instalado (opcional)
+- Ter o **Python** instalado OU utilizar algum servidor local como `http-server`
+
+### Comando para rodar:
+
+```bash
+python -m http.server
+```
+
+Depois, acesse no navegador:
+```
+http://localhost:8000/
+```
+
+> Caso use o `http-server` do Node.js:
+> ```bash
+> npx http-server
+> ```
+
+## 🛠️ Tecnologias Utilizadas
+
+- HTML + CSS
+- JavaScript com [D3.js v7](https://d3js.org/)
+- GeoJSON dos municípios de SP (`geojs-35-mun.json`)
+
+## 🗃️ Dados
+
+- O arquivo `geojs-35-mun.json` contém os dados geográficos dos municípios do estado de São Paulo.
+- Os 20 pontos atendidos são sorteados aleatoriamente a cada execução.
+- Esta é uma visualização ilustrativa; 
+
+
+
 
 # EJ
 

@@ -1,72 +1,142 @@
-
-=======
-// link para ver o mapa: http://localhost:8000/ponderadabruna.html
-
-
-
-
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grafo São Paulo</title>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <style>
-        .node { fill: red; stroke: black; stroke-width: 1.5px; }
-        .link { stroke: gray; stroke-width: 1.5px; }
-        .map { fill: none; stroke: black; stroke-width: 2px; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mapa de Chamados dos Gasistas - SP</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      margin-top: 20px;
+    }
+    #explicacao {
+      max-width: 800px;
+      text-align: center;
+      margin: 10px 20px 20px;
+    }
+    svg {
+      border: 1px solid #ccc;
+    }
+    .node {
+      stroke: black;
+      stroke-width: 1px;
+    }
+    .link {
+      stroke: gray;
+      stroke-width: 0.7px;
+      opacity: 0.5;
+    }
+    .map {
+      fill: none;
+      stroke: black;
+      stroke-width: 1;
+    }
+    .legenda {
+      font-size: 12px;
+      margin-top: 10px;
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+    .legenda-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .circulo {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .vermelho {
+      background: red;
+      border: 1px solid black;
+    }
+    .amarelo {
+      background: yellow;
+      border: 1px solid black;
+    }
+  </style>
 </head>
 <body>
-    <svg width="800" height="600"></svg>
-    <script>
-        const svg = d3.select("svg");
+  <h1>Mapa de Chamados dos Gasistas no Estado de São Paulo</h1>
+  <div id="explicacao">
+    Este mapa interativo representa uma simulação de atendimento logístico da cidade de São Paulo para outras regiões do estado.
+    A capital funciona como uma central de chamadas, de onde partem solicitações de gasistas para municípios do interior. As ligações
+    em linha simbolizam esses atendimentos e os pontos vermelhos marcam os destinos. Ou seja, os gasistas sairiam de São Paulo, para atender as outras cidades. Os dados foram simulados com base em um modelo de
+    distribuição territorial.
+  </div>
+  <svg width="800" height="600"></svg>
+  <div class="legenda">
+    <div class="legenda-item"><span class="circulo vermelho"></span> Cidades atendidas</div>
+    <div class="legenda-item"><span class="circulo amarelo"></span> Base dos gasistas (São Paulo)</div>
+  </div>
 
-        // Carregar GeoJSON corretamente via servidor local
-        d3.json("http://localhost:8000/geojs-35-mun.json").then(data => {
-            const projection = d3.geoMercator().fitSize([800, 600], data);
-            const path = d3.geoPath().projection(projection);
-            
-            svg.selectAll(".map")
-                .data(data.features)
-                .enter()
-                .append("path")
-                .attr("class", "map")
-                .attr("d", path)
-                .attr("stroke", "black")
-                .attr("fill", "none");
+  <script>
+    const svg = d3.select("svg");
 
-            // Gerar pontos dentro do mapa baseado no GeoJSON
-            const cidades = data.features.map(f => {
-                const [x, y] = projection(d3.geoCentroid(f));
-                return { nome: f.properties.name, x, y };
-            });
+    d3.json("geojs-35-mun.json").then((data) => {
+      const projection = d3.geoMercator().fitSize([800, 600], data);
+      const path = d3.geoPath().projection(projection);
 
-            // Criar ligações apenas com São Paulo
-            let links = cidades.slice(1).map(cidade => ({ source: "São Paulo", target: cidade.nome }));
+      svg
+        .selectAll(".map")
+        .data(data.features)
+        .enter()
+        .append("path")
+        .attr("class", "map")
+        .attr("d", path);
 
-            // Criar links
-            svg.selectAll(".link")
-                .data(links)
-                .enter()
-                .append("line")
-                .attr("class", "link")
-                .attr("x1", d => cidades.find(n => n.nome === d.source).x)
-                .attr("y1", d => cidades.find(n => n.nome === d.source).y)
-                .attr("x2", d => cidades.find(n => n.nome === d.target).x)
-                .attr("y2", d => cidades.find(n => n.nome === d.target).y);
+      const todasCidades = data.features.map((f) => {
+        const [x, y] = projection(d3.geoCentroid(f));
+        return {
+          nome: f.properties.name,
+          x,
+          y,
+        };
+      });
 
-            // Criar nós
-            svg.selectAll(".node")
-                .data(cidades)
-                .enter()
-                .append("circle")
-                .attr("class", "node")
-                .attr("cx", d => d.x)
-                .attr("cy", d => d.y)
-                .attr("r", 5);
-        });
-    </script>
+      const sp = todasCidades.find((c) => c.nome === "São Paulo");
+      if (!sp) return;
+
+      const cidades = todasCidades.filter((c) => c.nome !== sp.nome);
+      const selecionadas = cidades.sort(() => 0.5 - Math.random()).slice(0, 20);
+
+      const links = selecionadas.map((cidade) => ({ source: sp, target: cidade }));
+
+      svg
+        .selectAll(".link")
+        .data(links)
+        .enter()
+        .append("line")
+        .attr("class", "link")
+        .attr("x1", (d) => d.source.x)
+        .attr("y1", (d) => d.source.y)
+        .attr("x2", (d) => d.target.x)
+        .attr("y2", (d) => d.target.y);
+
+      svg
+        .selectAll(".node")
+        .data([sp, ...selecionadas])
+        .enter()
+        .append("circle")
+        .attr("class", "node")
+        .attr("cx", (d) => d.x)
+        .attr("cy", (d) => d.y)
+        .attr("r", (d) => d.nome === sp.nome ? 6 : 4)
+        .attr("fill", (d) => d.nome === sp.nome ? "yellow" : "red")
+        .attr("stroke", "black")
+        .attr("stroke-width", 1);
+    });
+  </script>
 </body>
 </html>
